@@ -1,0 +1,42 @@
+# Secrets
+.env
+.env.local
+**/.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Databases and local uploads
+*.db
+*.sqlite3
+backend/nutriguard.db
+backend/storage/meals/*
+!backend/storage/meals/.gitkeep
+backend/uploads/meals/*
+!backend/uploads/meals/.gitkeep
+
+# Flutter / Dart
+nutriguard_ai/.dart_tool/
+nutriguard_ai/build/
+nutriguard_ai/.flutter-plugins
+nutriguard_ai/.flutter-plugins-dependencies
+**/.plugin_symlinks/
+**/ephemeral/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large binaries
+*.apk
+*.zip
+*.aab

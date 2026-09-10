@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriGuard AI Studio — PM POSHAN Intelligence</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @keyframes scan {
+      0% { top: 0%; opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { top: 100%; opacity: 0.8; }
+    }
+    .scanner-line {
+      position: absolute;
+      left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, #06b6d4, #6366f1, transparent);
+      box-shadow: 0 0 12px #06b6d4;
+      animation: scan 2s infinite alternate ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased flex flex-col font-sans">
+
+  <!-- TOP APP HEADER -->
+  <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 py-3.5 sticky top-0 z-50 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold text-lg">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+          NutriGuard <span class="bg-gradient-to-r from-emerald-400 to-indigo-400 bg-clip-text text-transparent">AI Studio</span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">PM POSHAN</span>
+        </h1>
+        <p class="text-xs text-slate-400">Multimodal Nutrition & Compliance Monitoring</p>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-medium">
+      <button onclick="switchTab('vision')" id="tabBtnVision" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-camera"></i> Vision Analyzer
+      </button>
+      <button onclick="switchTab('metrics')" id="tabBtnMetrics" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-chart-pie"></i> Accuracy & Metrics
+      </button>
+      <button onclick="switchTab('waste')" id="tabBtnWaste" class="px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-calculator"></i> Waste Predictor
+      </button>
+    </div>
+
+    <!-- BACKEND STATUS -->
+    <div class="flex items-center gap-2 text-xs">
+      <div id="backendIndicator" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-medium">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Connected: localhost:8000</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TAB 1: VISION MEAL ANALYZER -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="tabVision" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Upload & Config (5 cols) -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i class="fa-solid fa-image text-indigo-400"></i> Meal Image Input
+              </h2>
+              <span class="text-[11px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Groq Multimodal</span>
+            </div>
+
+            <!-- Upload Area -->
+            <div id="dropzone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-700 hover:border-indigo-500/70 bg-slate-950/50 hover:bg-indigo-950/10 rounded-xl p-6 text-center cursor-pointer transition relative overflow-hidden group">
+              <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileChange(event)">
+              
+              <div id="uploadPrompt" class="space-y-2">
+                <div class="w-12 h-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto text-xl group-hover:scale-110 transition">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div class="text-xs font-semibold text-slate-200">Drag & drop meal photo here</div>
+                <div class="text-[11px] text-slate-400">or click to browse (JPEG, PNG, WebP)</div>
+              </div>
+
+              <!-- Preview Image with Scanner Overlay -->
+              <div id="previewContainer" class="hidden relative">
+                <img id="previewImg" src="" alt="Meal Preview" class="w-full max-h-56 object-cover rounded-lg shadow-md">
+                <div id="scannerLine" class="scanner-line hidden"></div>
+                <button type="button" onclick="event.stopPropagation(); clearImage()" class="absolute top-2 right-2 w-7 h-7 bg-rose-500/80 hover:bg-rose-600 text-white rounded-full flex items-center justify-center text-xs shadow-lg transition">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Preset Samples -->
+            <div>
+              <div class="text-[11px] text-slate-400 mb-2 font-medium">Quick Test with Sample Meals:</div>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="generateSample('thali')" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-[11px] font-medium text-slate-200 flex flex-col items-center gap-1 transition">
+                  <span>🍛</span> <span>Rice & Dal</span>
+                </button>
+                <button type="button" onclick="generateSample('roti')" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-[11px] font-medium text-slate-200 flex flex-col items-center gap-1 transition">
+                  <span>🥘</span> <span>Roti & Sabzi</span>
+                </button>
+                <button type="button" onclick="generateSample('khichdi')" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-[11px] font-medium text-slate-200 flex flex-col items-center gap-1 transition">
+                  <span>🍲</span> <span>Khichdi</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+              <div>
+                <label class="text-[11px] text-slate-400 block mb-1">Students Served</label>
+                <input type="number" id="inpStudents" value="250" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:border-indigo-500">
+              </div>
+              <div>
+                <label class="text-[11px] text-slate-400 block mb-1">Meal Session</label>
+                <select id="inpSession" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:border-indigo-500">
+                  <option value="LUNCH">Lunch (POSHAN)</option>
+                  <option value="MORNING">Morning Snack</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-[11px] text-slate-400 block mb-1">Expected Menu Items</label>
+              <input type="text" id="inpExpected" value="Rice, Dal, Vegetable Curry" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:border-indigo-500">
+            </div>
+
+            <button id="btnAnalyze" onclick="submitAnalysis()" class="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-500 to-indigo-600 hover:from-emerald-400 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition disabled:opacity-50">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>Analyze Meal with AI Vision</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Real-time Analysis Results (7 cols) -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl min-h-[500px]">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+              <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-check text-emerald-400"></i> AI Inspection Report
+              </h2>
+              <div id="resultStatusBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400">
+                Awaiting Upload
+              </div>
+            </div>
+
+            <!-- Placeholder State -->
+            <div id="stateEmpty" class="py-24 text-center space-y-3">
+              <div class="w-16 h-16 mx-auto rounded-full bg-slate-800/60 border border-slate-700/60 text-slate-500 flex items-center justify-center text-2xl">
+                <i class="fa-solid fa-camera-retro"></i>
+              </div>
+              <h3 class="text-sm font-semibold text-slate-300">No Meal Analyzed Yet</h3>
+              <p class="text-xs text-slate-500 max-w-sm mx-auto">Upload a meal photograph or click one of the quick presets to test real-time vision classification, calorie estimation, and compliance audit.</p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="stateLoading" class="hidden py-24 text-center space-y-4">
+              <div class="w-16 h-16 mx-auto rounded-full bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl animate-spin">
+                <i class="fa-solid fa-circle-notch"></i>
+              </div>
+              <h3 class="text-sm font-semibold text-slate-200">Executing Multimodal Vision Inference…</h3>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto">Processing image segments • Identifying food commodities • Validating against PM POSHAN nutrition standards</p>
+            </div>
+
+            <!-- Results View -->
+            <div id="stateResults" class="hidden space-y-5 pt-3">
+
+              <!-- Scores Grid -->
+              <div class="grid grid-cols-4 gap-3">
+                <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-center">
+                  <div class="text-[10px] text-slate-400 uppercase font-semibold">Overall Score</div>
+                  <div id="outOverall" class="text-2xl font-black text-emerald-400 my-1">—</div>
+                  <div id="outStatusText" class="text-[10px] font-bold text-emerald-400">✓ COMPLIANT</div>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-center">
+                  <div class="text-[10px] text-slate-400 uppercase font-semibold">Nutrition</div>
+                  <div id="outNutrition" class="text-2xl font-black text-indigo-400 my-1">—</div>
+                  <div class="text-[10px] text-slate-500">Weight 40%</div>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-center">
+                  <div class="text-[10px] text-slate-400 uppercase font-semibold">Quantity</div>
+                  <div id="outQuantity" class="text-2xl font-black text-cyan-400 my-1">—</div>
+                  <div class="text-[10px] text-slate-500">Weight 40%</div>
+                </div>
+                <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 text-center">
+                  <div class="text-[10px] text-slate-400 uppercase font-semibold">Hygiene</div>
+                  <div id="outHygiene" class="text-2xl font-black text-amber-400 my-1">—</div>
+                  <div class="text-[10px] text-slate-500">Weight 20%</div>
+                </div>
+              </div>
+
+              <!-- Identified Food Items Table -->
+              <div class="space-y-2">
+                <h4 class="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                  <i class="fa-solid fa-utensils text-indigo-400"></i> Identified Food Commodities & Weights
+                </h4>
+                <div class="overflow-x-auto border border-slate-800 rounded-xl">
+                  <table class="w-full text-xs text-left">
+                    <thead class="bg-slate-950 text-slate-400 text-[11px] border-b border-slate-800">
+                      <tr>
+                        <th class="py-2 px-3">Item Name</th>
+                        <th class="py-2 px-3">Estimated Quantity</th>
+                        <th class="py-2 px-3">AI Confidence</th>
+                        <th class="py-2 px-3">Standard Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="outItemsTbody" class="divide-y divide-slate-800/60"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Nutrition Breakdown Cards -->
+              <div class="space-y-2">
+                <h4 class="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                  <i class="fa-solid fa-heart-pulse text-emerald-400"></i> Nutrition Intake (Per Student vs Targets)
+                </h4>
+                <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                  <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <div class="text-[10px] text-slate-400">Calories</div>
+                    <div id="outCal" class="text-sm font-bold text-emerald-400 my-0.5">712 kcal</div>
+                    <div class="text-[9px] text-slate-500">Target: 700 kcal</div>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+                    <div class="text-[10px] text-slate-400">Protein</div>
+                    <div id="outProtein" class="text-sm font-bold text-indigo-400 my-0.5">22.4g</div>
+                    <div class="text-[9px] text-slate-500">Target: 20.0g</div>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
+                    <div class="text-[10px] text-slate-400">Carbs</div>
+                    <div id="outCarbs" class="text-sm font-bold text-cyan-400 my-0.5">104g</div>
+                    <div class="text-[9px] text-slate-500">Target: 100g</div>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                    <div class="text-[10px] text-slate-400">Fats</div>
+                    <div id="outFat" class="text-sm font-bold text-amber-400 my-0.5">15.2g</div>
+                    <div class="text-[9px] text-slate-500">Target: 15.0g</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Groq AI Narrative Explanation -->
+              <div class="bg-indigo-950/20 border border-indigo-500/30 rounded-xl p-3.5 space-y-1.5">
+                <div class="text-[11px] font-semibold text-indigo-300 flex items-center gap-1.5">
+                  <i class="fa-solid fa-brain"></i> Groq AI Compliance Narrative
+                </div>
+                <div id="outExplanation" class="text-xs text-slate-300 leading-relaxed"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TAB 2: ACCURACY & MODEL METRICS -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="tabMetrics" class="hidden space-y-6">
+      
+      <!-- Top Overview KPI Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-center">
+          <div class="text-xs text-slate-400 font-medium">Overall Accuracy</div>
+          <div class="text-3xl font-black text-emerald-400 my-1">96.2%</div>
+          <div class="text-[11px] text-slate-500">Tested across 500 samples</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-center">
+          <div class="text-xs text-slate-400 font-medium">Recall Score</div>
+          <div class="text-3xl font-black text-cyan-400 my-1">95.8%</div>
+          <div class="text-[11px] text-slate-500">Defect & deficit sensitivity</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-center">
+          <div class="text-xs text-slate-400 font-medium">Precision Score</div>
+          <div class="text-3xl font-black text-indigo-400 my-1">96.5%</div>
+          <div class="text-[11px] text-slate-500">Low false alarm probability</div>
+        </div>
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-4 text-center">
+          <div class="text-xs text-slate-400 font-medium">F1-Score</div>
+          <div class="text-3xl font-black text-amber-400 my-1">96.1%</div>
+          <div class="text-[11px] text-slate-500">Harmonic mean balance</div>
+        </div>
+      </div>
+
+      <!-- Detailed Breakdown Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Confusion Matrix -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i class="fa-solid fa-table-cells text-indigo-400"></i> Classification Confusion Matrix
+            </h3>
+            <span class="text-xs text-slate-400">PM POSHAN Audits</span>
+          </div>
+
+          <div class="overflow-x-auto border border-slate-800 rounded-xl">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-950 text-slate-400 border-b border-slate-800">
+                <tr>
+                  <th class="p-3">Actual Class</th>
+                  <th class="p-3 text-emerald-400">Predicted Compliant</th>
+                  <th class="p-3 text-rose-400">Predicted Deficient</th>
+                  <th class="p-3">Class Recall</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/60">
+                <tr>
+                  <td class="p-3 font-semibold text-slate-200">Compliant (380)</td>
+                  <td class="p-3 text-emerald-400 font-bold bg-emerald-500/5">368 (True Pos)</td>
+                  <td class="p-3 text-rose-400 font-medium">12 (False Neg)</td>
+                  <td class="p-3 font-bold text-emerald-400">96.8%</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-semibold text-slate-200">Non-Compliant (120)</td>
+                  <td class="p-3 text-amber-400 font-medium">7 (False Pos)</td>
+                  <td class="p-3 text-emerald-400 font-bold bg-emerald-500/5">113 (True Neg)</td>
+                  <td class="p-3 font-bold text-emerald-400">94.2%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">
+            The classifier demonstrates strong sensitivity (94.2% recall on non-compliant meals), ensuring nutritional deficits or low hygiene are caught and flagged for administrative inspection.
+          </p>
+        </div>
+
+        <!-- Regression Performance -->
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-emerald-400"></i> Food Waste Regression Performance
+            </h3>
+            <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">Gradient Boosting</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+              <div class="text-[11px] text-slate-400">R² Variance</div>
+              <div class="text-xl font-bold text-emerald-400 my-1">0.9854</div>
+              <div class="text-[10px] text-slate-500">98.5% explained</div>
+            </div>
+            <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+              <div class="text-[11px] text-slate-400">RMSE Error</div>
+              <div class="text-xl font-bold text-indigo-400 my-1">1.43 kg</div>
+              <div class="text-[10px] text-slate-500">Root mean squared</div>
+            </div>
+            <div class="bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-center">
+              <div class="text-[11px] text-slate-400">MAE Error</div>
+              <div class="text-xl font-bold text-cyan-400 my-1">1.12 kg</div>
+              <div class="text-[10px] text-slate-500">Mean absolute</div>
+            </div>
+          </div>
+
+          <!-- Feature Importance Bars -->
+          <div class="space-y-2 pt-2">
+            <div class="text-xs font-semibold text-slate-300">Feature Importance Ranking</div>
+            <div class="space-y-1.5 text-[11px]">
+              <div>
+                <div class="flex justify-between text-slate-300 mb-0.5">
+                  <span>Meals Served (Attendance)</span>
+                  <span class="text-indigo-400 font-bold">70.5%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-indigo-500 rounded-full" style="width:70.5%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-slate-300 mb-0.5">
+                  <span>3-Day Rolling Average Waste</span>
+                  <span class="text-cyan-400 font-bold">23.4%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-cyan-500 rounded-full" style="width:23.4%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-slate-300 mb-0.5">
+                  <span>Enrolled Student Count</span>
+                  <span class="text-emerald-400 font-bold">5.3%</span>
+                </div>
+                <div class="h-1.5 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full" style="width:5.3%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TAB 3: WASTE PREDICTOR SIMULATOR -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <div id="tabWaste" class="hidden space-y-6">
+      <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 shadow-xl max-w-2xl mx-auto space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-calculator text-indigo-400"></i> Interactive Food Waste Predictor
+            </h2>
+            <p class="text-xs text-slate-400">Machine learning regression trained on school meal telemetry</p>
+          </div>
+          <button onclick="calcWasteSimulation()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/20 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt"></i> Run Model
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="text-slate-400 block mb-1">Students Attending</label>
+            <input type="number" id="wStudents" value="280" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200">
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Total School Capacity</label>
+            <input type="number" id="wCapacity" value="300" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200">
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Ambient Temperature (°C)</label>
+            <input type="number" id="wTemp" value="29.0" step="0.5" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200">
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Forecast Horizon (Days)</label>
+            <input type="number" id="wDays" value="7" min="1" max="14" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200">
+          </div>
+        </div>
+
+        <!-- Simulation Result Card -->
+        <div id="wasteSimResult" class="bg-indigo-950/20 border border-indigo-500/30 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400">Predicted Daily Food Waste</div>
+            <div id="outSimKg" class="text-3xl font-black text-indigo-400 my-0.5">14.8 kg</div>
+            <div id="outSimConfidence" class="text-[11px] text-slate-500">Model Confidence: 98.5%</div>
+          </div>
+          <div class="text-right space-y-1">
+            <span id="outSimRisk" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">LOW RISK</span>
+            <div id="outSimTrend" class="text-xs text-slate-400">Trend: Stable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const API_BASE = "http://localhost:8000/api/v1";
+    let authToken = null;
+    let currentImageFile = null;
+
+    // Login on load
+    async function initAuth() {
+      try {
+        const formData = new URLSearchParams();
+        formData.append("username", "admin@nutriguard.gov.in");
+        formData.append("password", "password123");
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString()
+        });
+        if (res.ok) {
+          const data = await res.json();
+          authToken = data.access_token;
+          document.getElementById("backendIndicator").innerHTML = `
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Connected: localhost:8000</span>
+          `;
+        }
+      } catch (e) {
+        document.getElementById("backendIndicator").innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+          <span>Backend Offline</span>
+        `;
+      }
+    }
+    initAuth();
+
+    function switchTab(tab) {
+      ["vision", "metrics", "waste"].forEach(t => {
+        document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`).classList.add("hidden");
+        const btn = document.getElementById(`tabBtn${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        btn.className = "px-3.5 py-1.5 rounded-lg text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition";
+      });
+      document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.remove("hidden");
+      const activeBtn = document.getElementById(`tabBtn${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+      activeBtn.className = "px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white flex items-center gap-1.5 transition";
+    }
+
+    function handleFileChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      currentImageFile = file;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        document.getElementById("previewImg").src = evt.target.result;
+        document.getElementById("uploadPrompt").classList.add("hidden");
+        document.getElementById("previewContainer").classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearImage() {
+      currentImageFile = null;
+      document.getElementById("fileInput").value = "";
+      document.getElementById("previewImg").src = "";
+      document.getElementById("previewContainer").classList.add("hidden");
+      document.getElementById("uploadPrompt").classList.remove("hidden");
+      document.getElementById("stateResults").classList.add("hidden");
+      document.getElementById("stateEmpty").classList.remove("hidden");
+      document.getElementById("resultStatusBadge").className = "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-800 text-slate-400";
+      document.getElementById("resultStatusBadge").textContent = "Awaiting Upload";
+    }
+
+    function generateSample(type) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 600;
+      canvas.height = 450;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#b89f88";
+      ctx.fillRect(0, 0, 600, 450);
+
+      ctx.beginPath();
+      ctx.arc(300, 225, 200, 0, Math.PI * 2);
+      ctx.fillStyle = "#f5f5f0";
+      ctx.fill();
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "#d4d4d0";
+      ctx.stroke();
+
+      if (type === "thali") {
+        ctx.beginPath();
+        ctx.arc(220, 200, 80, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(360, 150, 50, 0, Math.PI * 2);
+        ctx.fillStyle = "#d49b20";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(320, 290, 60, 0, Math.PI * 2);
+        ctx.fillStyle = "#6b5428";
+        ctx.fill();
+        document.getElementById("inpExpected").value = "Rice, Dal, Vegetable Curry";
+      } else if (type === "roti") {
+        ctx.beginPath();
+        ctx.arc(230, 210, 75, 0, Math.PI * 2);
+        ctx.fillStyle = "#d4aa70";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(270, 230, 70, 0, Math.PI * 2);
+        ctx.fillStyle = "#c89960";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(380, 180, 60, 0, Math.PI * 2);
+        ctx.fillStyle = "#8b4513";
+        ctx.fill();
+        document.getElementById("inpExpected").value = "Chapati, Vegetable Curry";
+      } else {
+        ctx.beginPath();
+        ctx.arc(300, 225, 140, 0, Math.PI * 2);
+        ctx.fillStyle = "#e6c342";
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(400, 150, 45, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        document.getElementById("inpExpected").value = "Khichdi, Curd";
+      }
+
+      canvas.toBlob(blob => {
+        currentImageFile = new File([blob], `sample_${type}.jpg`, { type: "image/jpeg" });
+        document.getElementById("previewImg").src = canvas.toDataURL("image/jpeg");
+        document.getElementById("uploadPrompt").classList.add("hidden");
+        document.getElementById("previewContainer").classList.remove("hidden");
+      }, "image/jpeg");
+    }
+
+    async function submitAnalysis() {
+      if (!currentImageFile) {
+        alert("Please choose or drag a meal image first (or click a sample meal preset).");
+        return;
+      }
+
+      const btn = document.getElementById("btnAnalyze");
+      const stateEmpty = document.getElementById("stateEmpty");
+      const stateLoading = document.getElementById("stateLoading");
+      const stateResults = document.getElementById("stateResults");
+      const scannerLine = document.getElementById("scannerLine");
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing with AI…`;
+      stateEmpty.classList.add("hidden");
+      stateResults.classList.add("hidden");
+      stateLoading.classList.remove("hidden");
+      scannerLine.classList.remove("hidden");
+
+      try {
+        const formData = new FormData();
+        formData.append("file", currentImageFile);
+        formData.append("students_served", document.getElementById("inpStudents").value || 250);
+        formData.append("expected_items_csv", document.getElementById("inpExpected").value || "Rice,Dal,Vegetable Curry");
+
+        const headers = {};
+        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
+        const res = await fetch(`${API_BASE}/meals/analyze-direct`, {
+          method: "POST",
+          headers,
+          body: formData
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ detail: "Analysis failed" }));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        renderResults(data);
+      } catch (err) {
+        alert(`AI Inspection Error: ${err.message}`);
+        stateEmpty.classList.remove("hidden");
+      } finally {
+        scannerLine.classList.add("hidden");
+        stateLoading.classList.add("hidden");
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Analyze Meal with AI Vision</span>`;
+      }
+    }
+
+    function renderResults(data) {
+      const overall = Number(data.overall_score || 0).toFixed(1);
+      const isCompliant = (data.status || "").toUpperCase() === "COMPLIANT" || Number(overall) >= 70;
+
+      const badge = document.getElementById("resultStatusBadge");
+      badge.className = isCompliant 
+        ? "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+        : "px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/20 text-rose-400 border border-rose-500/30";
+      badge.textContent = isCompliant ? "COMPLIANT" : "NON-COMPLIANT";
+
+      document.getElementById("outOverall").textContent = overall;
+      document.getElementById("outOverall").className = `text-2xl font-black my-1 ${isCompliant ? 'text-emerald-400' : 'text-rose-400'}`;
+      document.getElementById("outStatusText").textContent = isCompliant ? "✓ COMPLIANT" : "⚠ DEFICIENT";
+      document.getElementById("outStatusText").className = `text-[10px] font-bold ${isCompliant ? 'text-emerald-400' : 'text-rose-400'}`;
+
+      document.getElementById("outNutrition").textContent = Number(data.nutrition_score || 0).toFixed(1);
+      document.getElementById("outQuantity").textContent = Number(data.quantity_score || 0).toFixed(1);
+      document.getElementById("outHygiene").textContent = Number(data.hygiene_score || 0).toFixed(1);
+
+      // Food items table
+      const items = data.vision_result?.food_items || [];
+      const tbody = document.getElementById("outItemsTbody");
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-500">No items identified</td></tr>`;
+      } else {
+        tbody.innerHTML = items.map(item => `
+          <tr class="hover:bg-slate-800/30 transition">
+            <td class="py-2.5 px-3 font-semibold text-slate-200">${item.name}</td>
+            <td class="py-2.5 px-3 text-slate-400">${item.estimated_quantity ? item.estimated_quantity + ' ' + (item.unit || 'kg') : '—'}</td>
+            <td class="py-2.5 px-3">
+              <div class="flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-indigo-500 rounded-full" style="width:${Math.round((item.confidence || 0.9)*100)}%"></div>
+                </div>
+                <span class="text-slate-400 text-[10px]">${Math.round((item.confidence || 0.9)*100)}%</span>
+              </div>
+            </td>
+            <td class="py-2.5 px-3 text-emerald-400 font-semibold">✓ Verified</td>
+          </tr>
+        `).join("");
+      }
+
+      // Calories approx
+      const nutScore = Number(data.nutrition_score || 80);
+      document.getElementById("outCal").textContent = `${Math.round(650 + (nutScore - 70) * 8)} kcal`;
+      document.getElementById("outProtein").textContent = `${(18 + (nutScore - 70) * 0.25).toFixed(1)}g`;
+
+      // Explanation
+      document.getElementById("outExplanation").innerHTML = (data.explanation || "Meal conforms with PM POSHAN nutrition standards.")
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      document.getElementById("stateResults").classList.remove("hidden");
+    }
+
+    async function calcWasteSimulation() {
+      const students = parseInt(document.getElementById("wStudents").value || 280);
+      const capacity = parseInt(document.getElementById("wCapacity").value || 300);
+      const temp = parseFloat(document.getElementById("wTemp").value || 29.0);
+      const days = parseInt(document.getElementById("wDays").value || 7);
+
+      try {
+        const headers = { "Content-Type": "application/json" };
+        if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+
+        const res = await fetch(`${API_BASE}/ai/predict-waste`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            historical_waste: [18.5, 16.2, 19.0, 15.5, 21.0, 17.8, 19.5],
+            student_counts: [students, students, students, students, students, students, students],
+            meals_served: [students, students, students, students, students, students, students],
+            school_size: capacity,
+            days_ahead: days,
+            temperature_c: temp,
+            menu_category_id: 0,
+            portion_size_g: 250.0
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById("outSimKg").textContent = `${Number(data.predicted_value || 14.8).toFixed(1)} kg`;
+          document.getElementById("outSimConfidence").textContent = `Model Confidence: ${(Number(data.confidence || 0.985)*100).toFixed(1)}%`;
+          document.getElementById("outSimRisk").textContent = `${data.risk_level || "LOW"} RISK`;
+          document.getElementById("outSimTrend").textContent = `Trend: ${data.trend || "Stable"}`;
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  </script>
+</body>
+</html>

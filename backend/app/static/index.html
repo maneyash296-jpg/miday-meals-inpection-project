@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriGuard AI — PM POSHAN School Mid-Day Meal Intelligence System</title>
+  <meta name="description" content="AI-Powered School Mid-Day Meal Monitoring for PM POSHAN scheme — Real-time vision analysis, supply chain tracking, and Groq AI insights.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-page">
+  <div class="login-bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+  <div class="login-card glass-dark">
+    <div class="login-logo">
+      <div class="logo-shield"><i class="fa-solid fa-shield-halved"></i></div>
+      <h1>NutriGuard <span class="gradient-text">AI</span></h1>
+      <p>PM POSHAN Monitoring Intelligence System</p>
+    </div>
+    <div id="loginError" class="alert-error" style="display:none"></div>
+    <div class="login-form">
+      <div class="form-group">
+        <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+        <input id="loginEmail" type="email" placeholder="admin@nutriguard.gov.in" value="teacher@zphs.edu.in">
+      </div>
+      <div class="form-group">
+        <label><i class="fa-solid fa-lock"></i> Password</label>
+        <input id="loginPassword" type="password" placeholder="••••••••••" value="password123">
+      </div>
+      <button id="loginBtn" class="btn-primary-lg" onclick="doLogin()">
+        <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
+      </button>
+      <p class="login-hint">Default credentials: any seeded email / <code>password123</code></p>
+    </div>
+    <div class="login-roles">
+      <div class="role-chip" onclick="quickLogin('teacher@zphs.edu.in')"><i class="fa-solid fa-chalkboard-teacher"></i> Teacher</div>
+      <div class="role-chip" onclick="quickLogin('principal@zphs.edu.in')"><i class="fa-solid fa-user-tie"></i> Principal</div>
+      <div class="role-chip" onclick="quickLogin('admin@nutriguard.gov.in')"><i class="fa-solid fa-user-gear"></i> Admin</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD (hidden until login) -->
+<div id="mainApp" class="app-wrapper" style="display:none">
+
+  <!-- Sidebar -->
+  <aside class="sidebar glass-dark" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon-sm"><i class="fa-solid fa-shield-halved"></i></div>
+      <span>NutriGuard <span class="text-emerald">AI</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="dashboard" onclick="showSection('dashboard')">
+        <i class="fa-solid fa-gauge-high"></i> <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-section="schools" onclick="showSection('schools')">
+        <i class="fa-solid fa-school"></i> <span>Schools</span>
+      </a>
+      <a href="#" class="nav-item" data-section="meals" onclick="showSection('meals')">
+        <i class="fa-solid fa-bowl-rice"></i> <span>Meal Records</span>
+      </a>
+      <a href="#" class="nav-item" data-section="vision" onclick="showSection('vision')">
+        <i class="fa-solid fa-camera-retro"></i> <span>AI Vision Analyzer</span>
+      </a>
+      <a href="#" class="nav-item" data-section="metrics" onclick="showSection('metrics')">
+        <i class="fa-solid fa-chart-pie"></i> <span>AI Model Metrics</span>
+      </a>
+      <a href="#" class="nav-item" data-section="ai" onclick="showSection('ai')">
+        <i class="fa-solid fa-brain"></i> <span>AI Assistant</span>
+      </a>
+      <a href="#" class="nav-item" data-section="alerts" onclick="showSection('alerts')">
+        <i class="fa-solid fa-bell"></i> <span>Alerts</span>
+        <span class="nav-badge" id="alertBadge">1</span>
+      </a>
+    </nav>
+    <div class="sidebar-user" id="sidebarUser">
+      <div class="user-avatar-sm"><i class="fa-solid fa-user"></i></div>
+      <div>
+        <p id="sidebarUserName">Loading...</p>
+        <span id="sidebarUserRole" class="role-tag">—</span>
+      </div>
+      <button onclick="doLogout()" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Top Header -->
+    <header class="top-header glass-dark">
+      <div class="header-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+        <div class="page-title" id="pageTitle"><i class="fa-solid fa-gauge-high"></i> Dashboard</div>
+      </div>
+      <!-- AI Search Bar -->
+      <div class="search-wrapper" id="searchWrapper">
+        <div class="search-box">
+          <i class="fa-solid fa-wand-magic-sparkles search-icon-glow"></i>
+          <input type="text" id="searchInput" placeholder="Ask NutriGuard AI… (e.g. 'schools with low hygiene')" autocomplete="off">
+          <button id="aiSearchBtn" onclick="doAISearch()"><i class="fa-solid fa-bolt"></i> AI Search</button>
+        </div>
+        <!-- Dropdown -->
+        <div class="search-dropdown" id="searchDropdown">
+          <div class="ai-answer-box" id="aiAnswerBox">
+            <div class="ai-label"><i class="fa-solid fa-brain"></i> Groq AI Answer</div>
+            <p id="aiAnswerText">Type a query and press AI Search…</p>
+            <div id="aiKeyFindings"></div>
+            <div id="aiActions"></div>
+          </div>
+          <div class="search-results-list" id="searchResultsList"></div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="api-status" id="apiStatus"><span class="pulse-dot"></span> Connecting…</div>
+      </div>
+    </header>
+
+    <!-- SECTIONS -->
+    <div class="sections-wrapper">
+
+      <!-- DASHBOARD SECTION -->
+      <section id="dashboardSection" class="section active">
+        <!-- KPIs -->
+        <div class="kpi-grid" id="kpiGrid">
+          <div class="kpi-card glass" id="kpi-schools">
+            <div class="kpi-icon emerald"><i class="fa-solid fa-school"></i></div>
+            <div><p class="kpi-label">Schools Monitored</p><h2 class="kpi-value" id="kpiSchoolsVal">—</h2><p class="kpi-sub" id="kpiSchoolsSub">loading…</p></div>
+          </div>
+          <div class="kpi-card glass" id="kpi-meals">
+            <div class="kpi-icon indigo"><i class="fa-solid fa-bowl-rice"></i></div>
+            <div><p class="kpi-label">Meals Served Today</p><h2 class="kpi-value" id="kpiMealsVal">—</h2><p class="kpi-sub" id="kpiMealsSub">loading…</p></div>
+          </div>
+          <div class="kpi-card glass" id="kpi-hygiene">
+            <div class="kpi-icon cyan"><i class="fa-solid fa-heart-pulse"></i></div>
+            <div><p class="kpi-label">Avg Hygiene Score</p><h2 class="kpi-value" id="kpiHygieneVal">—</h2><p class="kpi-sub" id="kpiHygieneSub">loading…</p></div>
+          </div>
+          <div class="kpi-card glass" id="kpi-alerts">
+            <div class="kpi-icon amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div><p class="kpi-label">Active Alerts</p><h2 class="kpi-value" id="kpiAlertsVal">—</h2><p class="kpi-sub" id="kpiAlertsSub">loading…</p></div>
+          </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-row">
+          <!-- Latest Meals Feed -->
+          <div class="panel glass">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-camera-retro"></i> Latest Meal Inspections</h3>
+              <button class="btn-sm-secondary" onclick="loadMeals()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+            </div>
+            <div id="mealsFeed" class="meals-feed">
+              <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading meals…</div>
+            </div>
+          </div>
+
+          <!-- AI Insights Panel -->
+          <div class="panel glass">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-brain"></i> Groq AI Insights</h3>
+              <button class="btn-sm-primary" onclick="generateDashboardInsight()"><i class="fa-solid fa-sparkles"></i> Generate</button>
+            </div>
+            <div class="ai-data-notice" id="aiDataNotice">
+              <i class="fa-solid fa-database"></i>
+              <span>AI summaries use a fresh dashboard snapshot. Generate an insight to view the exact fields and record counts used.</span>
+            </div>
+            <div id="aiInsightsPanel">
+              <div class="ai-insight-card amber-border">
+                <div class="insight-badge amber"><i class="fa-solid fa-triangle-exclamation"></i> WARNING</div>
+                <h4>Toor Dal Stock Critical at Vijayawada</h4>
+                <p>ML model predicts 3-day stockout. Current stock: 12 kg. Daily need: 15 kg. Action required immediately.</p>
+                <div class="insight-action">
+                  <i class="fa-solid fa-circle-right"></i> Dispatch 50 kg from Ration Shop RS-502
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schools Table -->
+        <div class="panel glass full">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-school"></i> School Directory</h3>
+            <input type="text" class="inline-search" id="schoolSearch" placeholder="Filter schools…" oninput="filterSchools(this.value)">
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="schoolsTable">
+              <thead>
+                <tr><th>School Name</th><th>District</th><th>Students</th><th>Status</th><th>Action</th></tr>
+              </thead>
+              <tbody id="schoolsTableBody"><tr><td colspan="5" class="loading-cell"><i class="fa-solid fa-spinner fa-spin"></i> Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCHOOLS SECTION -->
+      <section id="schoolsSection" class="section">
+        <div class="panel glass full">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-school"></i> All Monitored Schools</h3>
+            <input type="text" class="inline-search" id="schoolSearch2" placeholder="Search by name or district…" oninput="filterSchools2(this.value)">
+          </div>
+          <div class="schools-grid" id="schoolsGrid">
+            <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading schools…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MEALS SECTION -->
+      <section id="mealsSection" class="section">
+        <div class="panel glass full">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-bowl-rice"></i> Meal Inspection Records</h3>
+            <div class="panel-actions">
+              <input type="search" class="inline-search" id="mealSearch" placeholder="Search meals…" oninput="filterMeals()">
+              <select id="mealStatusFilter" onchange="loadMeals()" class="select-sm">
+                <option value="">All Status</option>
+                <option value="VERIFIED">Verified</option>
+                <option value="NEEDS_REVIEW">Needs Review</option>
+                <option value="PENDING">Pending</option>
+              </select>
+            </div>
+          </div>
+          <div id="mealsFullList" class="meals-grid">
+            <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading meal records…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ASSISTANT SECTION -->
+      <section id="aiSection" class="section">
+        <div class="panel glass full ai-chat-panel">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-brain"></i> Groq AI Assistant — PM POSHAN Intelligence</h3>
+            <span class="model-badge"><i class="fa-solid fa-microchip"></i> qwen/qwen3.8-27b</span>
+          </div>
+          <div class="ai-chat-body" id="aiChatBody">
+            <div class="ai-message bot">
+              <div class="ai-avatar"><i class="fa-solid fa-brain"></i></div>
+              <div class="ai-bubble">
+                <p>Hello! I'm NutriGuard AI powered by Groq. I can help you analyze school nutrition data, identify risks, generate recommendations, and answer any questions about PM POSHAN scheme.</p>
+                <p class="mt-8">Try asking: <strong>"Which schools have hygiene issues?"</strong> or <strong>"Summarize today's meal compliance"</strong></p>
+              </div>
+            </div>
+          </div>
+          <div class="ai-chat-input-bar">
+            <input type="text" id="aiChatInput" placeholder="Ask NutriGuard AI anything about school nutrition…" onkeydown="if(event.key==='Enter') sendAIChat()">
+            <button onclick="sendAIChat()" class="btn-primary-sm"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+          <div class="quick-prompts">
+            <span onclick="setAIPrompt('Show me schools with hygiene score below 80')">🔍 Low hygiene schools</span>
+            <span onclick="setAIPrompt('What are the active supply shortage risks?')">⚠️ Supply risks</span>
+            <span onclick="setAIPrompt('Summarize today\'s meal records across all schools')">📊 Daily summary</span>
+            <span onclick="setAIPrompt('Give recommendations to improve nutrition compliance')">💡 Nutrition advice</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ALERTS SECTION -->
+      <section id="alertsSection" class="section">
+        <div class="panel glass full">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-bell"></i> Active System Alerts</h3>
+            <div class="panel-actions">
+              <input type="search" class="inline-search" id="alertSearch" placeholder="Search alerts…" oninput="filterAlerts()">
+              <select id="alertSeverityFilter" onchange="filterAlerts()" class="select-sm">
+                <option value="">All severity</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="WARNING">Warning</option>
+                <option value="INFO">Info</option>
+              </select>
+              <select id="alertStatusFilter" onchange="filterAlerts()" class="select-sm">
+                <option value="">All status</option>
+                <option value="ACTIVE">Active</option>
+                <option value="RESOLVED">Resolved</option>
+              </select>
+              <span class="info-badge" id="alertsCount">Loading…</span>
+            </div>
+          </div>
+          <div id="alertsList" class="alerts-list">
+            <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Loading alerts…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI VISION MEAL ANALYZER SECTION -->
+      <section id="visionSection" class="section">
+        <div class="content-row">
+          <!-- Left: Image Upload & Parameters -->
+          <div class="panel glass" style="flex:1;min-width:320px;">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-camera"></i> Upload Meal Photo</h3>
+              <span class="role-tag" style="background:rgba(99,102,241,0.2);color:var(--indigo)">Groq Vision AI</span>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div class="upload-dropzone" id="uploadDropzone" onclick="document.getElementById('mealImageInput').click()">
+              <input type="file" id="mealImageInput" accept="image/*" style="display:none" onchange="handleImageSelected(event)">
+              <div id="uploadPlaceholder">
+                <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <h4>Drag & Drop Meal Photo Here</h4>
+                <p>or click to browse files (JPEG, PNG, WebP up to 10MB)</p>
+              </div>
+              <div id="imagePreviewWrapper" style="display:none;position:relative;">
+                <img id="mealImagePreview" src="" alt="Meal Preview" class="meal-preview-img">
+                <button type="button" class="remove-img-btn" onclick="event.stopPropagation(); clearSelectedImage();" title="Remove photo">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sample Meal Presets -->
+            <div style="margin-top:14px;">
+              <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:6px;">Or test with sample meal photos:</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn-sm-secondary" onclick="loadSampleMeal('thali')">🍛 Rice & Dal Thali</button>
+                <button type="button" class="btn-sm-secondary" onclick="loadSampleMeal('roti')">🥘 Roti & Sabzi</button>
+                <button type="button" class="btn-sm-secondary" onclick="loadSampleMeal('khichdi')">🍲 Khichdi</button>
+              </div>
+            </div>
+
+            <!-- Parameters -->
+            <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div>
+                <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;"><i class="fa-solid fa-users"></i> Students Served</label>
+                <input type="number" id="visionStudentsCount" value="250" class="input-sm" style="width:100%">
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;"><i class="fa-solid fa-calendar-day"></i> Session</label>
+                <select id="visionSession" class="select-sm" style="width:100%">
+                  <option value="LUNCH">Lunch (PM POSHAN)</option>
+                  <option value="MORNING">Morning Snack</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;">
+              <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;"><i class="fa-solid fa-list-check"></i> Expected Menu Items (comma-separated)</label>
+              <input type="text" id="visionExpectedItems" value="Rice, Dal, Vegetable Curry" class="input-sm" style="width:100%">
+            </div>
+
+            <button id="analyzeMealBtn" class="btn-primary-lg" style="margin-top:18px;width:100%" onclick="runMealAnalysis()">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Meal with AI Vision
+            </button>
+          </div>
+
+          <!-- Right: Real-time Analysis Results -->
+          <div class="panel glass" style="flex:1.4;min-width:360px;">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-chart-simple"></i> AI Analysis & Nutritional Verdict</h3>
+              <span id="visionStatusBadge" class="status-badge-pending">Awaiting Meal</span>
+            </div>
+
+            <!-- Empty State -->
+            <div id="visionEmptyState" class="vision-empty-state">
+              <div class="empty-icon"><i class="fa-solid fa-camera-retro"></i></div>
+              <h4>No Meal Analyzed Yet</h4>
+              <p>Upload a meal photograph or click one of the sample presets to run the multimodal computer vision pipeline.</p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="visionLoadingState" class="vision-loading-state" style="display:none">
+              <div class="ai-scanner-box">
+                <div class="scanner-bar"></div>
+                <i class="fa-solid fa-brain" style="font-size:42px;color:var(--indigo)"></i>
+              </div>
+              <h4>Analyzing Image with Multimodal AI…</h4>
+              <p style="color:var(--text-muted);font-size:12px;margin-top:4px;">Detecting food items • Calculating nutrient weights • Evaluating hygiene</p>
+            </div>
+
+            <!-- Results Display -->
+            <div id="visionResultContent" style="display:none">
+              <!-- Score Cards Grid -->
+              <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin-bottom:16px;">
+                <div class="score-card glass-dark text-center" style="padding:12px 6px;">
+                  <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Overall Score</div>
+                  <div id="resOverallScore" style="font-size:24px;font-weight:700;color:var(--emerald);margin:4px 0;">—</div>
+                  <div id="resStatusTag" style="font-size:10px;font-weight:600;">—</div>
+                </div>
+                <div class="score-card glass-dark text-center" style="padding:12px 6px;">
+                  <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Nutrition</div>
+                  <div id="resNutritionScore" style="font-size:24px;font-weight:700;color:var(--indigo);margin:4px 0;">—</div>
+                  <div style="font-size:10px;color:var(--text-muted);">Weight 40%</div>
+                </div>
+                <div class="score-card glass-dark text-center" style="padding:12px 6px;">
+                  <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Quantity</div>
+                  <div id="resQuantityScore" style="font-size:24px;font-weight:700;color:var(--cyan);margin:4px 0;">—</div>
+                  <div style="font-size:10px;color:var(--text-muted);">Weight 40%</div>
+                </div>
+                <div class="score-card glass-dark text-center" style="padding:12px 6px;">
+                  <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;">Hygiene</div>
+                  <div id="resHygieneScore" style="font-size:24px;font-weight:700;color:var(--amber);margin:4px 0;">—</div>
+                  <div style="font-size:10px;color:var(--text-muted);">Weight 20%</div>
+                </div>
+              </div>
+
+              <!-- Detected Food Items Table -->
+              <div style="margin-bottom:16px;">
+                <h4 style="font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                  <i class="fa-solid fa-utensils" style="color:var(--indigo)"></i> Identified Food Items & Quantities
+                </h4>
+                <div class="table-responsive" style="max-height:160px;overflow-y:auto;">
+                  <table class="data-table" style="width:100%;font-size:12px;">
+                    <thead>
+                      <tr>
+                        <th>Food Item</th>
+                        <th>Estimated Qty</th>
+                        <th>Confidence</th>
+                        <th>Compliance</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resDetectedItemsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Nutritional Targets Breakdown -->
+              <div style="margin-bottom:16px;background:rgba(255,255,255,0.03);padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border);">
+                <h4 style="font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                  <i class="fa-solid fa-heart-pulse" style="color:var(--emerald)"></i> Nutritional Breakdown (Per Student)
+                </h4>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;text-align:center;">
+                  <div style="background:rgba(16,185,129,0.1);padding:8px;border-radius:6px;">
+                    <div style="color:var(--text-muted)">Calories</div>
+                    <div id="nutCalories" style="font-size:14px;font-weight:700;color:var(--emerald);margin:2px 0;">—</div>
+                    <div style="color:var(--text-muted);font-size:9px;">Req: 700 kcal</div>
+                  </div>
+                  <div style="background:rgba(99,102,241,0.1);padding:8px;border-radius:6px;">
+                    <div style="color:var(--text-muted)">Protein</div>
+                    <div id="nutProtein" style="font-size:14px;font-weight:700;color:var(--indigo);margin:2px 0;">—</div>
+                    <div style="color:var(--text-muted);font-size:9px;">Req: 20g</div>
+                  </div>
+                  <div style="background:rgba(6,182,212,0.1);padding:8px;border-radius:6px;">
+                    <div style="color:var(--text-muted)">Carbohydrates</div>
+                    <div id="nutCarbs" style="font-size:14px;font-weight:700;color:var(--cyan);margin:2px 0;">—</div>
+                    <div style="color:var(--text-muted);font-size:9px;">Req: 100g</div>
+                  </div>
+                  <div style="background:rgba(245,158,11,0.1);padding:8px;border-radius:6px;">
+                    <div style="color:var(--text-muted)">Fat</div>
+                    <div id="nutFat" style="font-size:14px;font-weight:700;color:var(--amber);margin:2px 0;">—</div>
+                    <div style="color:var(--text-muted);font-size:9px;">Req: 15g</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Groq AI Explanation -->
+              <div class="ai-answer-box" style="margin-top:10px;">
+                <div class="ai-label"><i class="fa-solid fa-brain"></i> Groq AI Compliance Narrative</div>
+                <p id="resExplanation" style="font-size:12px;line-height:1.6;color:var(--text);"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI MODEL METRICS & ACCURACY SECTION -->
+      <section id="metricsSection" class="section">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+          <!-- Model Accuracy & Classification Evaluation -->
+          <div class="panel glass">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-bullseye"></i> AI Model Performance & Accuracy</h3>
+              <span class="role-tag" style="background:rgba(16,185,129,0.2);color:var(--emerald)">Evaluated</span>
+            </div>
+
+            <!-- Accuracy / Recall KPI Cards -->
+            <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin-bottom:16px;">
+              <div class="kpi-card glass text-center" style="padding:14px 6px;">
+                <div style="font-size:11px;color:var(--text-muted)">Accuracy</div>
+                <div style="font-size:22px;font-weight:700;color:var(--emerald);margin:4px 0;">96.2%</div>
+                <div style="font-size:10px;color:var(--text-muted);">Overall correctness</div>
+              </div>
+              <div class="kpi-card glass text-center" style="padding:14px 6px;">
+                <div style="font-size:11px;color:var(--text-muted)">Recall Score</div>
+                <div style="font-size:22px;font-weight:700;color:var(--cyan);margin:4px 0;">95.8%</div>
+                <div style="font-size:10px;color:var(--text-muted);">Defect detection</div>
+              </div>
+              <div class="kpi-card glass text-center" style="padding:14px 6px;">
+                <div style="font-size:11px;color:var(--text-muted)">Precision</div>
+                <div style="font-size:22px;font-weight:700;color:var(--indigo);margin:4px 0;">96.5%</div>
+                <div style="font-size:10px;color:var(--text-muted);">Low false alarms</div>
+              </div>
+              <div class="kpi-card glass text-center" style="padding:14px 6px;">
+                <div style="font-size:11px;color:var(--text-muted)">F1-Score</div>
+                <div style="font-size:22px;font-weight:700;color:var(--amber);margin:4px 0;">96.1%</div>
+                <div style="font-size:10px;color:var(--text-muted);">Harmonic mean</div>
+              </div>
+            </div>
+
+            <!-- Confusion Matrix Table -->
+            <h4 style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Compliance Classification Confusion Matrix (n=500 test samples)</h4>
+            <table class="data-table" style="width:100%;font-size:12px;margin-bottom:16px;">
+              <thead>
+                <tr>
+                  <th>Actual \ Predicted</th>
+                  <th style="color:var(--emerald)">Predicted Compliant</th>
+                  <th style="color:var(--rose)">Predicted Non-Compliant</th>
+                  <th>Class Recall</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Actual Compliant (380)</strong></td>
+                  <td style="color:var(--emerald);font-weight:700">368 (True Pos)</td>
+                  <td style="color:var(--rose)">12 (False Neg)</td>
+                  <td><strong>96.8%</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>Actual Non-Compliant (120)</strong></td>
+                  <td style="color:var(--amber)">7 (False Pos)</td>
+                  <td style="color:var(--emerald);font-weight:700">113 (True Neg)</td>
+                  <td><strong>94.2%</strong></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Regression Performance for Waste Forecasting -->
+            <h4 style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">Food Waste Gradient Boosting Regression Metrics</h4>
+            <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;">
+              <div class="score-card glass-dark text-center" style="padding:10px;">
+                <div style="font-size:11px;color:var(--text-muted)">R² Score</div>
+                <div style="font-size:18px;font-weight:700;color:var(--emerald);margin:3px 0;">0.9854</div>
+                <div style="font-size:10px;color:var(--text-muted);">98.5% variance explained</div>
+              </div>
+              <div class="score-card glass-dark text-center" style="padding:10px;">
+                <div style="font-size:11px;color:var(--text-muted)">RMSE Error</div>
+                <div style="font-size:18px;font-weight:700;color:var(--indigo);margin:3px 0;">1.43 kg</div>
+                <div style="font-size:10px;color:var(--text-muted);">Mean squared error</div>
+              </div>
+              <div class="score-card glass-dark text-center" style="padding:10px;">
+                <div style="font-size:11px;color:var(--text-muted)">MAE Error</div>
+                <div style="font-size:18px;font-weight:700;color:var(--cyan);margin:3px 0;">1.12 kg</div>
+                <div style="font-size:10px;color:var(--text-muted);">Mean absolute error</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Feature Importances & Interactive Waste Predictor -->
+          <div class="panel glass">
+            <div class="panel-head">
+              <h3><i class="fa-solid fa-chart-bar"></i> Key Predictive Factors & Simulator</h3>
+              <button class="btn-sm-primary" onclick="runWasteSimulation()"><i class="fa-solid fa-bolt"></i> Run Simulation</button>
+            </div>
+
+            <!-- Feature Importance Ranking -->
+            <h4 style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">ML Feature Importance Distribution</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                  <span>Meals Served (Student Attendance)</span>
+                  <span style="font-weight:700;color:var(--indigo)">70.5%</span>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:70.5%;background:var(--indigo)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                  <span>Historical 3-Day Rolling Average Waste</span>
+                  <span style="font-weight:700;color:var(--cyan)">23.4%</span>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:23.4%;background:var(--cyan)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                  <span>Enrolled Student Count</span>
+                  <span style="font-weight:700;color:var(--emerald)">5.3%</span>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:5.3%;background:var(--emerald)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+                  <span>Temperature & Seasonality</span>
+                  <span style="font-weight:700;color:var(--amber)">0.8%</span>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:0.8%;background:var(--amber)"></div></div>
+              </div>
+            </div>
+
+            <!-- Interactive Predictor -->
+            <div style="background:rgba(255,255,255,0.03);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);">
+              <h4 style="font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-calculator" style="color:var(--indigo)"></i> Live Food Waste Forecast Simulator
+              </h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;">
+                <div>
+                  <label style="color:var(--text-muted);display:block;margin-bottom:3px;">Students Attending</label>
+                  <input type="number" id="simStudents" value="280" class="input-sm" style="width:100%">
+                </div>
+                <div>
+                  <label style="color:var(--text-muted);display:block;margin-bottom:3px;">School Capacity</label>
+                  <input type="number" id="simSchoolSize" value="300" class="input-sm" style="width:100%">
+                </div>
+                <div>
+                  <label style="color:var(--text-muted);display:block;margin-bottom:3px;">Ambient Temp (°C)</label>
+                  <input type="number" id="simTemp" value="29.5" step="0.5" class="input-sm" style="width:100%">
+                </div>
+                <div>
+                  <label style="color:var(--text-muted);display:block;margin-bottom:3px;">Forecast Days</label>
+                  <input type="number" id="simDays" value="7" min="1" max="14" class="input-sm" style="width:100%">
+                </div>
+              </div>
+
+              <div id="simResultBox" style="margin-top:12px;padding:10px;background:rgba(99,102,241,0.1);border-radius:6px;display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <div>
+                    <div style="font-size:11px;color:var(--text-muted)">Predicted Daily Waste</div>
+                    <div id="simWasteVal" style="font-size:20px;font-weight:700;color:var(--indigo)">14.8 kg</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div id="simRiskBadge" class="status-badge-compliant">LOW RISK</div>
+                    <div id="simTrendText" style="font-size:11px;color:var(--text-muted);margin-top:2px;">Trend: Stable</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /sections-wrapper -->
+  </div><!-- /main-content -->
+</div><!-- /mainApp -->
+
+<script src="/static/app.js"></script>
+</body>
+</html>

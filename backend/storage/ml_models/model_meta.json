@@ -1,0 +1,36 @@
+{
+  "model_type": "GradientBoostingRegressor",
+  "trained_at": "2026-09-04T22:57:04.188940",
+  "dataset_samples": 1500,
+  "r2_score": 0.9854,
+  "rmse": 1.4286,
+  "mae": 1.1239,
+  "baseline_rf_r2": 0.9843,
+  "baseline_rf_rmse": 1.4797,
+  "feature_importances": {
+    "student_count": 0.0526,
+    "school_size": 0.0,
+    "attendance_rate": 0.0012,
+    "meals_served": 0.7054,
+    "day_of_week": 0.0008,
+    "is_weekend": 0.0001,
+    "is_holiday_season": 0.0015,
+    "temperature_c": 0.0014,
+    "menu_category_id": 0.0006,
+    "hist_3day_avg_waste": 0.2335,
+    "portion_size_g": 0.0029
+  },
+  "feature_names": [
+    "student_count",
+    "school_size",
+    "attendance_rate",
+    "meals_served",
+    "day_of_week",
+    "is_weekend",
+    "is_holiday_season",
+    "temperature_c",
+    "menu_category_id",
+    "hist_3day_avg_waste",
+    "portion_size_g"
+  ]
+}
